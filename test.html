@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保険業法コンプライアンスゲーム - デバッグ版</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .debug-info {
+            background: #ffe;
+            border: 1px solid #cc0;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>保険業法コンプライアンスゲーム - デバッグ版</h1>
+        <div class="debug-info" id="debug">JavaScriptを読み込み中...</div>
+        
+        <div id="scenario-title">シナリオタイトル</div>
+        <div id="scenario-text">シナリオテキスト</div>
+        <div id="choices"></div>
+    </div>
+
+    <script>
+        // デバッグ情報
+        const debug = document.getElementById('debug');
+        debug.textContent = 'JavaScript実行開始';
+        
+        try {
+            // シンプルなゲームロジック
+            const scenarios = [
+                {
+                    title: "テストシナリオ",
+                    text: "これはテストです。",
+                    choices: [
+                        { text: "選択肢1", correct: true, feedback: "正解！" },
+                        { text: "選択肢2", correct: false, feedback: "不正解", penalty: "ペナルティ" }
+                    ]
+                }
+            ];
+            
+            let currentScenarioIndex = 0;
+            
+            function loadScenario() {
+                debug.textContent = 'シナリオ読み込み中...';
+                const scenario = scenarios[currentScenarioIndex];
+                document.getElementById('scenario-title').textContent = scenario.title;
+                document.getElementById('scenario-text').textContent = scenario.text;
+                
+                const choicesEl = document.getElementById('choices');
+                choicesEl.innerHTML = '';
+                
+                scenario.choices.forEach((choice, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = choice.text;
+                    button.style.display = 'block';
+                    button.style.margin = '10px 0';
+                    button.style.padding = '10px';
+                    button.onclick = () => {
+                        alert(choice.feedback);
+                    };
+                    choicesEl.appendChild(button);
+                });
+                
+                debug.textContent = 'シナリオ読み込み完了';
+            }
+            
+            // 初期化
+            loadScenario();
+            
+        } catch (error) {
+            debug.textContent = 'エラー: ' + error.message;
+            console.error(error);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保険業法コンプライアンスゲーム</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .scenario {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 5px;
+        }
+        .choice {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            padding: 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .choice:hover {
+            background: #45a049;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            max-width: 500px;
+            z-index: 1000;
+        }
+        .modal.show {
+            display: block;
+        }
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+        .overlay.show {
+            display: block;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+        .penalty {
+            background: #ffeeee;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 3px solid red;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>保険業法コンプライアンスゲーム</h1>
+        
+        <div class="stats">
+            <div class="stat">
+                <div>スコア</div>
+                <div id="score" class="stat-value">0</div>
+            </div>
+            <div class="stat">
+                <div>違反回数</div>
+                <div id="violations" class="stat-value">0</div>
+            </div>
+            <div class="stat">
+                <div>進行状況</div>
+                <div id="progress" class="stat-value">1/10</div>
+            </div>
+        </div>
+        
+        <div class="scenario">
+            <h2 id="title">読み込み中...</h2>
+            <p id="text"></p>
+            <div id="choices"></div>
+        </div>
+    </div>
+    
+    <div class="overlay" id="overlay"></div>
+    <div class="modal" id="modal">
+        <h3 id="modal-title"></h3>
+        <p id="modal-text"></p>
+        <div id="modal-penalty"></div>
+        <button onclick="nextScenario()">次へ</button>
+    </div>
+    
+    <div class="modal" id="gameover">
+        <h2>ゲーム終了！</h2>
+        <p>最終スコア: <span id="final-score">0</span></p>
+        <p>違反回数: <span id="final-violations">0</span></p>
+        <p id="final-message"></p>
+        <button onclick="location.reload()">もう一度プレイ</button>
+    </div>
+
+    <script>
+        // グローバル変数
+        let currentIndex = 0;
+        let score = 0;
+        let violations = 0;
+        
+        // シナリオデータ
+        const scenarios = [
+            {
+                title: "保険募集時の説明義務",
+                text: "お客様から「細かい約款は後で読むから、とりあえず契約だけ進めてほしい」と言われました。",
+                choices: [
+                    {
+                        text: "要望通り簡単な説明だけで契約を進める",
+                        correct: false,
+                        feedback: "保険業法第294条違反！重要事項の説明は必須です。",
+                        penalty: "業務改善命令・登録取消の可能性"
+                    },
+                    {
+                        text: "重要事項を必ず説明してから契約を進める",
+                        correct: true,
+                        feedback: "正解！適切な対応です。"
+                    },
+                    {
+                        text: "パンフレットを渡すだけで済ませる",
+                        correct: false,
+                        feedback: "不十分！口頭説明も必要です。",
+                        penalty: "行政指導・業務停止命令の可能性"
+                    }
+                ]
+            },
+            {
+                title: "クーリング・オフの説明",
+                text: "生命保険契約時、クーリング・オフについて質問されました。",
+                choices: [
+                    {
+                        text: "「うちの保険はクーリング・オフできません」と説明",
+                        correct: false,
+                        feedback: "虚偽説明は保険業法第300条違反！",
+                        penalty: "業務停止命令・登録取消"
+                    },
+                    {
+                        text: "クーリング・オフ制度を正確に説明する",
+                        correct: true,
+                        feedback: "素晴らしい！正しい対応です。"
+                    },
+                    {
+                        text: "「契約後に説明します」と回答を避ける",
+                        correct: false,
+                        feedback: "説明義務違反！契約前に説明が必要です。",
+                        penalty: "行政指導・業務改善命令"
+                    }
+                ]
+            },
+            {
+                title: "特別利益の提供",
+                text: "大口契約のお客様から「契約したら特典はないの？」と聞かれました。",
+                choices: [
+                    {
+                        text: "「商品券を差し上げます」と提案",
+                        correct: false,
+                        feedback: "保険業法第300条違反！特別利益の提供は禁止です。",
+                        penalty: "業務停止命令・登録取消"
+                    },
+                    {
+                        text: "「特別な利益提供は法律で禁止されています」と説明",
+                        correct: true,
+                        feedback: "完璧！コンプライアンスを守りました。"
+                    },
+                    {
+                        text: "「保険料を割引します」と独自提案",
+                        correct: false,
+                        feedback: "認可保険料以外は違法！",
+                        penalty: "業務停止命令・行政処分"
+                    }
+                ]
+            },
+            {
+                title: "比較説明",
+                text: "他社商品との比較を求められました。",
+                choices: [
+                    {
+                        text: "「他社は保障が悪い」と一方的に説明",
+                        correct: false,
+                        feedback: "不当比較は保険業法第300条違反！",
+                        penalty: "業務改善命令・業務停止命令"
+                    },
+                    {
+                        text: "客観的データで公平に比較説明",
+                        correct: true,
+                        feedback: "適切！客観的な説明が大切です。"
+                    },
+                    {
+                        text: "「他社の説明はできません」と拒否",
+                        correct: false,
+                        feedback: "適切な比較説明は顧客利益になります。",
+                        penalty: "行政指導"
+                    }
+                ]
+            },
+            {
+                title: "告知義務",
+                text: "お客様が「病気のことは黙っていてもいい？」と聞いてきました。",
+                choices: [
+                    {
+                        text: "「黙っていれば分かりません」と助言",
+                        correct: false,
+                        feedback: "告知義務違反の教唆は重大違反！",
+                        penalty: "登録取消・刑事罰"
+                    },
+                    {
+                        text: "告知義務の重要性を説明し正直な申告を促す",
+                        correct: true,
+                        feedback: "正しい対応！告知は保険の基本です。"
+                    },
+                    {
+                        text: "「聞かなかったことにします」と見て見ぬふり",
+                        correct: false,
+                        feedback: "募集人として不適切！",
+                        penalty: "業務停止・登録取消"
+                    }
+                ]
+            },
+            {
+                title: "無登録募集",
+                text: "同僚から「名前を貸して」と頼まれました。",
+                choices: [
+                    {
+                        text: "信頼できる同僚なので名前を貸す",
+                        correct: false,
+                        feedback: "名義貸しは保険業法違反！",
+                        penalty: "登録取消・懲役刑"
+                    },
+                    {
+                        text: "断固拒否し、必要なら上司に報告",
+                        correct: true,
+                        feedback: "適切！無登録募集は重大違法行為です。"
+                    },
+                    {
+                        text: "「今回だけ」と条件付きで承諾",
+                        correct: false,
+                        feedback: "一度でも違法！",
+                        penalty: "登録取消・刑事罰"
+                    }
+                ]
+            },
+            {
+                title: "保険料立替",
+                text: "お客様が「保険料を立て替えて」と依頼してきました。",
+                choices: [
+                    {
+                        text: "お客様のために立て替える",
+                        correct: false,
+                        feedback: "保険料立替は保険業法で禁止！",
+                        penalty: "業務改善命令・登録取消"
+                    },
+                    {
+                        text: "立替不可を説明し、猶予制度を案内",
+                        correct: true,
+                        feedback: "正解！適切な制度案内が大切です。"
+                    },
+                    {
+                        text: "会社に内緒で個人的に貸す",
+                        correct: false,
+                        feedback: "形を変えても立替行為！",
+                        penalty: "業務停止・登録取消"
+                    }
+                ]
+            },
+            {
+                title: "意向把握",
+                text: "「とにかく安い保険でいい」というお客様への対応は？",
+                choices: [
+                    {
+                        text: "最安値の保険をすぐ提案",
+                        correct: false,
+                        feedback: "意向把握不十分！",
+                        penalty: "行政指導・業務改善命令"
+                    },
+                    {
+                        text: "ニーズを詳しく確認してから提案",
+                        correct: true,
+                        feedback: "素晴らしい！意向把握は基本です。"
+                    },
+                    {
+                        text: "「安い保険は保障が薄い」と高額商品を勧める",
+                        correct: false,
+                        feedback: "顧客意向を無視！",
+                        penalty: "業務改善命令"
+                    }
+                ]
+            },
+            {
+                title: "個人情報",
+                text: "別の顧客から「○○さんの保険内容は？」と聞かれました。",
+                choices: [
+                    {
+                        text: "親しい間柄なので教える",
+                        correct: false,
+                        feedback: "個人情報保護法違反！",
+                        penalty: "業務停止・刑事罰"
+                    },
+                    {
+                        text: "「お答えできません」と断る",
+                        correct: true,
+                        feedback: "完璧！守秘義務は絶対です。"
+                    },
+                    {
+                        text: "「良い保険に入っている」と曖昧に答える",
+                        correct: false,
+                        feedback: "曖昧でも情報漏洩！",
+                        penalty: "行政指導・業務停止"
+                    }
+                ]
+            },
+            {
+                title: "不実告知",
+                text: "解約検討中の顧客への対応は？",
+                choices: [
+                    {
+                        text: "「解約すると大損」と虚偽説明",
+                        correct: false,
+                        feedback: "不実告知は保険業法第300条違反！",
+                        penalty: "業務停止・登録取消"
+                    },
+                    {
+                        text: "解約時の影響を正確に説明",
+                        correct: true,
+                        feedback: "適切！正確な情報提供が責務です。"
+                    },
+                    {
+                        text: "「二度と保険に入れない」と脅す",
+                        correct: false,
+                        feedback: "脅迫的募集は重大違反！",
+                        penalty: "登録取消・刑事罰"
+                    }
+                ]
+            }
+        ];
+        
+        // 初期化
+        function init() {
+            loadScenario();
+        }
+        
+        // シナリオ読み込み
+        function loadScenario() {
+            if (currentIndex >= scenarios.length) {
+                endGame();
+                return;
+            }
+            
+            const scenario = scenarios[currentIndex];
+            document.getElementById('title').textContent = scenario.title;
+            document.getElementById('text').textContent = scenario.text;
+            document.getElementById('progress').textContent = `${currentIndex + 1}/${scenarios.length}`;
+            
+            const choicesDiv = document.getElementById('choices');
+            choicesDiv.innerHTML = '';
+            
+            scenario.choices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.className = 'choice';
+                button.textContent = choice.text;
+                button.onclick = () => checkAnswer(index);
+                choicesDiv.appendChild(button);
+            });
+        }
+        
+        // 回答チェック
+        function checkAnswer(index) {
+            const scenario = scenarios[currentIndex];
+            const choice = scenario.choices[index];
+            
+            const modal = document.getElementById('modal');
+            const overlay = document.getElementById('overlay');
+            const modalTitle = document.getElementById('modal-title');
+            const modalText = document.getElementById('modal-text');
+            const modalPenalty = document.getElementById('modal-penalty');
+            
+            if (choice.correct) {
+                score += 10;
+                modalTitle.textContent = '正解！';
+                modalTitle.className = 'correct';
+                modalPenalty.innerHTML = '';
+            } else {
+                violations++;
+                modalTitle.textContent = '違反行為です！';
+                modalTitle.className = 'incorrect';
+                if (choice.penalty) {
+                    modalPenalty.innerHTML = `<div class="penalty"><strong>実際の処分：</strong>${choice.penalty}</div>`;
+                }
+            }
+            
+            modalText.textContent = choice.feedback;
+            document.getElementById('score').textContent = score;
+            document.getElementById('violations').textContent = violations;
+            
+            modal.classList.add('show');
+            overlay.classList.add('show');
+        }
+        
+        // 次のシナリオ
+        function nextScenario() {
+            document.getElementById('modal').classList.remove('show');
+            document.getElementById('overlay').classList.remove('show');
+            currentIndex++;
+            loadScenario();
+        }
+        
+        // ゲーム終了
+        function endGame() {
+            document.getElementById('final-score').textContent = score;
+            document.getElementById('final-violations').textContent = violations;
+            
+            const message = document.getElementById('final-message');
+            if (violations === 0) {
+                message.textContent = '完璧！優秀なコンプライアンス意識です！';
+                message.style.color = 'green';
+            } else if (violations <= 2) {
+                message.textContent = '注意が必要です。保険業法を復習しましょう。';
+                message.style.color = 'orange';
+            } else {
+                message.textContent = '危険！重大な処分を受ける可能性があります。';
+                message.style.color = 'red';
+            }
+            
+            document.getElementById('gameover').classList.add('show');
+            document.getElementById('overlay').classList.add('show');
+        }
+        
+        // ゲーム開始
+        init();
+    </script>
+</body>
+</html>

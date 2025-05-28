@@ -1,0 +1,29 @@
+{
+  "name": "Claude Code Development",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-json"
+      ]
+    }
+  },
+
+  "postCreateCommand": "npm install -g @anthropic-ai/claude-code",
+
+  "remoteUser": "node",
+
+  "forwardPorts": [],
+
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind"
+  ]
+}

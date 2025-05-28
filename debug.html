@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>デバッグテスト</title>
+</head>
+<body>
+    <h1>動作確認</h1>
+    <p id="test">JavaScriptが動作していません</p>
+    <button onclick="alert('ボタンが動作しました')">クリックテスト</button>
+    
+    <script>
+        document.getElementById('test').textContent = 'JavaScriptが正常に動作しています';
+        console.log('スクリプトが読み込まれました');
+    </script>
+</body>
+</html>

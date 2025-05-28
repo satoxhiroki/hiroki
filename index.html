@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>保険業法コンプライアンスゲーム - リスクを見極めろ！</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo-area">
+                    <svg class="logo-icon" viewBox="0 0 100 100" width="60" height="60">
+                        <circle cx="50" cy="50" r="45" fill="#FFD700" stroke="#FFA500" stroke-width="3"/>
+                        <path d="M50 20 L60 40 L80 40 L65 55 L70 75 L50 60 L30 75 L35 55 L20 40 L40 40 Z" fill="#FF6B6B"/>
+                        <text x="50" y="55" font-size="24" fill="white" text-anchor="middle" font-weight="bold">法</text>
+                    </svg>
+                    <div>
+                        <h1>保険業法コンプライアンスチャレンジ</h1>
+                        <p class="subtitle">⚠️ 違反は即アウト！正しい判断力が試される ⚠️</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="game-stats">
+            <div class="stat-item stat-score">
+                <svg viewBox="0 0 24 24" width="30" height="30" class="stat-icon">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" fill="#FFD700"/>
+                </svg>
+                <div>
+                    <span class="stat-label">スコア</span>
+                    <span id="score" class="stat-value">0</span>
+                </div>
+            </div>
+            <div class="stat-item stat-violations">
+                <svg viewBox="0 0 24 24" width="30" height="30" class="stat-icon">
+                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="#e74c3c"/>
+                </svg>
+                <div>
+                    <span class="stat-label">違反回数</span>
+                    <span id="violations" class="stat-value">0</span>
+                </div>
+            </div>
+            <div class="stat-item stat-progress">
+                <svg viewBox="0 0 24 24" width="30" height="30" class="stat-icon">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#27ae60"/>
+                </svg>
+                <div>
+                    <span class="stat-label">進行状況</span>
+                    <span id="scenario-count" class="stat-value">1/10</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="character-container">
+            <div class="character" id="character">
+                <svg viewBox="0 0 200 300" width="150" height="225">
+                    <!-- 体 -->
+                    <rect x="50" y="150" width="100" height="120" rx="10" fill="#4A5568"/>
+                    <!-- ネクタイ -->
+                    <path d="M100 150 L90 180 L100 220 L110 180 Z" fill="#E53E3E"/>
+                    <!-- 頭 -->
+                    <circle cx="100" cy="100" r="50" fill="#FDBCB4"/>
+                    <!-- 髪 -->
+                    <path d="M50 100 Q50 50 100 50 Q150 50 150 100 Q140 60 100 70 Q60 60 50 100" fill="#2D3748"/>
+                    <!-- 目 -->
+                    <circle cx="80" cy="100" r="5" fill="#2D3748"/>
+                    <circle cx="120" cy="100" r="5" fill="#2D3748"/>
+                    <!-- 口（表情変化用） -->
+                    <path id="mouth" d="M80 120 Q100 130 120 120" stroke="#2D3748" stroke-width="3" fill="none"/>
+                    <!-- 腕 -->
+                    <rect x="30" y="160" width="20" height="80" rx="10" fill="#FDBCB4"/>
+                    <rect x="150" y="160" width="20" height="80" rx="10" fill="#FDBCB4"/>
+                </svg>
+                <div class="character-speech" id="character-speech">
+                    コンプライアンスを守ろう！
+                </div>
+            </div>
+        </div>
+
+        <div id="game-area" class="game-area">
+            <div id="scenario-container" class="scenario-container">
+                <div class="scenario-header">
+                    <svg viewBox="0 0 24 24" width="30" height="30" class="scenario-icon">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,13L8,18H10L12,13H10Z" fill="#2a5298"/>
+                    </svg>
+                    <h2 id="scenario-title">シナリオを読み込み中...</h2>
+                </div>
+                <div class="scenario-content">
+                    <p id="scenario-text" class="scenario-text"></p>
+                </div>
+                <div id="choices" class="choices"></div>
+            </div>
+        </div>
+
+        <div id="feedback-modal" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="feedback-header">
+                    <svg id="feedback-icon" viewBox="0 0 24 24" width="50" height="50">
+                        <!-- 動的に変更 -->
+                    </svg>
+                    <h3 id="feedback-title"></h3>
+                </div>
+                <p id="feedback-text"></p>
+                <div id="penalty-info" class="penalty-info hidden">
+                    <svg viewBox="0 0 24 24" width="30" height="30" class="penalty-icon">
+                        <path d="M12,2L1,21H23M12,6L19.53,19H4.47M11,10V14H13V10M11,16V18H13V16" fill="#e74c3c"/>
+                    </svg>
+                    <div>
+                        <h4>実際の処分例</h4>
+                        <p id="penalty-text"></p>
+                    </div>
+                </div>
+                <button id="next-button" class="btn-primary">
+                    <span>次のシナリオへ</span>
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" fill="white"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="game-over-modal" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content game-over-content">
+                <svg viewBox="0 0 24 24" width="80" height="80" class="trophy-icon">
+                    <path d="M5,3H7V1H17V3H19A2,2 0 0,1 21,5V7A2,2 0 0,1 19,9H17.83C17,14 15,17.31 12,17.92V21H15V23H9V21H12V17.92C9,17.31 7,14 6.17,9H5A2,2 0 0,1 3,7V5A2,2 0 0,1 5,3M5,5V7H7V5H5M17,5V7H19V5H17Z" fill="#FFD700"/>
+                </svg>
+                <h2>チャレンジ完了！</h2>
+                <div class="final-stats">
+                    <div class="final-stat-item">
+                        <span class="final-label">最終スコア</span>
+                        <span id="final-score" class="final-value">0</span>
+                    </div>
+                    <div class="final-stat-item">
+                        <span class="final-label">違反回数</span>
+                        <span id="final-violations" class="final-value">0</span>
+                    </div>
+                </div>
+                <div class="result-badge" id="result-badge">
+                    <!-- 動的に生成 -->
+                </div>
+                <p class="result-message" id="result-message"></p>
+                <button id="restart-button" class="btn-primary btn-large">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45 19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" fill="white"/>
+                    </svg>
+                    もう一度チャレンジ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="particles" id="particles"></div>
+    
+    <script src="game.js"></script>
+</body>
+</html>
