@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>たのしいさんすうゲーム</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #764ba2;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-container {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+        }
+
+        .score-box {
+            background: #f0f0f0;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 1.2em;
+        }
+
+        .score-box span {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .question-container {
+            background: #f8f9fa;
+            padding: 40px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            font-size: 3em;
+            color: #333;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .answer-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .answer-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 25px;
+            font-size: 2em;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .answer-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .answer-btn:active {
+            transform: translateY(0);
+        }
+
+        .answer-btn.correct {
+            background: #48bb78;
+            animation: correctAnswer 0.5s ease;
+        }
+
+        .answer-btn.wrong {
+            background: #f56565;
+            animation: wrongAnswer 0.5s ease;
+        }
+
+        @keyframes correctAnswer {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes wrongAnswer {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .message {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            height: 40px;
+            color: #667eea;
+        }
+
+        .start-btn {
+            background: #764ba2;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.3em;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(118, 75, 162, 0.3);
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(118, 75, 162, 0.4);
+        }
+
+        .emoji {
+            font-size: 2em;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🌟 たのしいさんすうゲーム 🌟</h1>
+        
+        <div class="score-container">
+            <div class="score-box">
+                せいかい: <span id="correct-score">0</span>
+            </div>
+            <div class="score-box">
+                れんぞく: <span id="streak">0</span>
+            </div>
+        </div>
+
+        <div class="question-container" id="question">
+            クリックしてスタート！
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <div class="answer-buttons hidden" id="answer-buttons">
+            <button class="answer-btn" onclick="checkAnswer(this)"></button>
+            <button class="answer-btn" onclick="checkAnswer(this)"></button>
+            <button class="answer-btn" onclick="checkAnswer(this)"></button>
+            <button class="answer-btn" onclick="checkAnswer(this)"></button>
+            <button class="answer-btn" onclick="checkAnswer(this)"></button>
+            <button class="answer-btn" onclick="checkAnswer(this)"></button>
+        </div>
+
+        <button class="start-btn" id="start-btn" onclick="startGame()">
+            ゲームをはじめる
+        </button>
+    </div>
+
+    <script>
+        let currentQuestion = {};
+        let correctCount = 0;
+        let streakCount = 0;
+        let isPlaying = false;
+
+        const encouragements = [
+            "すごい！ 😊",
+            "やったね！ 🎉",
+            "せいかい！ ⭐",
+            "すばらしい！ 🌟",
+            "かんぺき！ 👏",
+            "てんさい！ 🏆"
+        ];
+
+        const tryAgainMessages = [
+            "もういちど！ 💪",
+            "がんばって！ 🌈",
+            "つぎはできるよ！ 🎯",
+            "ファイト！ 🔥"
+        ];
+
+        function generateQuestion() {
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            const answer = num1 + num2;
+            
+            return {
+                num1: num1,
+                num2: num2,
+                answer: answer,
+                display: `${num1} + ${num2} = ?`
+            };
+        }
+
+        function generateAnswerOptions(correctAnswer) {
+            const options = [correctAnswer];
+            
+            while (options.length < 6) {
+                const wrongAnswer = Math.max(2, correctAnswer + Math.floor(Math.random() * 11) - 5);
+                if (!options.includes(wrongAnswer)) {
+                    options.push(wrongAnswer);
+                }
+            }
+            
+            return options.sort(() => Math.random() - 0.5);
+        }
+
+        function startGame() {
+            isPlaying = true;
+            document.getElementById('start-btn').classList.add('hidden');
+            document.getElementById('answer-buttons').classList.remove('hidden');
+            nextQuestion();
+        }
+
+        function nextQuestion() {
+            currentQuestion = generateQuestion();
+            document.getElementById('question').textContent = currentQuestion.display;
+            
+            const options = generateAnswerOptions(currentQuestion.answer);
+            const buttons = document.querySelectorAll('.answer-btn');
+            
+            buttons.forEach((btn, index) => {
+                btn.textContent = options[index];
+                btn.classList.remove('correct', 'wrong');
+                btn.disabled = false;
+            });
+            
+            document.getElementById('message').textContent = '';
+        }
+
+        function checkAnswer(button) {
+            const answer = parseInt(button.textContent);
+            const buttons = document.querySelectorAll('.answer-btn');
+            
+            buttons.forEach(btn => btn.disabled = true);
+            
+            if (answer === currentQuestion.answer) {
+                button.classList.add('correct');
+                correctCount++;
+                streakCount++;
+                document.getElementById('correct-score').textContent = correctCount;
+                document.getElementById('streak').textContent = streakCount;
+                
+                const message = encouragements[Math.floor(Math.random() * encouragements.length)];
+                document.getElementById('message').innerHTML = `<span class="emoji">${message}</span>`;
+                
+                setTimeout(nextQuestion, 1500);
+            } else {
+                button.classList.add('wrong');
+                streakCount = 0;
+                document.getElementById('streak').textContent = streakCount;
+                
+                const message = tryAgainMessages[Math.floor(Math.random() * tryAgainMessages.length)];
+                document.getElementById('message').textContent = message;
+                
+                setTimeout(() => {
+                    buttons.forEach(btn => {
+                        btn.disabled = false;
+                        btn.classList.remove('wrong');
+                    });
+                    document.getElementById('message').textContent = '';
+                }, 1500);
+            }
+        }
+    </script>
+</body>
+</html>
