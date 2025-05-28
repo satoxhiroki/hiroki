@@ -159,7 +159,13 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>🌟 たのしいさんすうゲーム 🌟</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1 style="margin: 0;">🌟 たのしいさんすうゲーム 🌟</h1>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span id="username" style="color: #764ba2; font-weight: bold;"></span>
+                <button onclick="logout()" style="background: #f56565; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">ログアウト</button>
+            </div>
+        </div>
         
         <div class="score-container">
             <div class="score-box">
@@ -190,11 +196,20 @@
         </button>
     </div>
 
+    <script src="auth.js"></script>
     <script>
         let currentQuestion = {};
         let correctCount = 0;
         let streakCount = 0;
         let isPlaying = false;
+        let gameStartTime = null;
+        let questionsAnswered = 0;
+
+        window.onload = function() {
+            if (!checkAuth()) return;
+            const user = getCurrentUser();
+            document.getElementById('username').textContent = user.username;
+        };
 
         const encouragements = [
             "すごい！ 😊",
@@ -240,6 +255,11 @@
 
         function startGame() {
             isPlaying = true;
+            gameStartTime = new Date();
+            correctCount = 0;
+            questionsAnswered = 0;
+            document.getElementById('correct-score').textContent = correctCount;
+            document.getElementById('streak').textContent = 0;
             document.getElementById('start-btn').classList.add('hidden');
             document.getElementById('answer-buttons').classList.remove('hidden');
             nextQuestion();
@@ -271,13 +291,18 @@
                 button.classList.add('correct');
                 correctCount++;
                 streakCount++;
+                questionsAnswered++;
                 document.getElementById('correct-score').textContent = correctCount;
                 document.getElementById('streak').textContent = streakCount;
                 
                 const message = encouragements[Math.floor(Math.random() * encouragements.length)];
                 document.getElementById('message').innerHTML = `<span class="emoji">${message}</span>`;
                 
-                setTimeout(nextQuestion, 1500);
+                if (questionsAnswered >= 10) {
+                    endGame();
+                } else {
+                    setTimeout(nextQuestion, 1500);
+                }
             } else {
                 button.classList.add('wrong');
                 streakCount = 0;
@@ -294,6 +319,26 @@
                     document.getElementById('message').textContent = '';
                 }, 1500);
             }
+        }
+
+        function endGame() {
+            const endTime = new Date();
+            const timeTaken = Math.floor((endTime - gameStartTime) / 1000);
+            
+            saveScore(correctCount, timeTaken, questionsAnswered);
+            
+            document.getElementById('question').innerHTML = `
+                <div>
+                    <h2>ゲーム終了！</h2>
+                    <p>正解数: ${correctCount} / ${questionsAnswered}</p>
+                    <p>かかった時間: ${timeTaken}秒</p>
+                </div>
+            `;
+            
+            document.getElementById('answer-buttons').classList.add('hidden');
+            document.getElementById('start-btn').textContent = 'もう一度プレイ';
+            document.getElementById('start-btn').classList.remove('hidden');
+            document.getElementById('message').innerHTML = '<a href="profile.html" style="color: #667eea;">成績を見る</a>';
         }
     </script>
 </body>

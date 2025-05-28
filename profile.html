@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成績表 - 算数ゲーム</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 20px;
+        }
+        h1 {
+            color: #764ba2;
+            margin: 0;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .username {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .play-btn {
+            background: #48bb78;
+            color: white;
+        }
+        .play-btn:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+        .logout-btn {
+            background: #f56565;
+            color: white;
+        }
+        .logout-btn:hover {
+            background: #e53e3e;
+            transform: translateY(-2px);
+        }
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .scores-table {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: #f0f0f0;
+        }
+        .no-scores {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-size: 1.1em;
+        }
+        .performance-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        .excellent {
+            background: #48bb78;
+            color: white;
+        }
+        .good {
+            background: #4299e1;
+            color: white;
+        }
+        .fair {
+            background: #ed8936;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏆 成績表</h1>
+            <div class="user-info">
+                <span class="username" id="username"></span>
+                <div class="button-group">
+                    <button class="play-btn" onclick="window.location.href='math-game.html'">ゲームに戻る</button>
+                    <button class="logout-btn" onclick="logout()">ログアウト</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-value" id="totalGames">0</div>
+                <div class="stat-label">プレイ回数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="averageScore">0</div>
+                <div class="stat-label">平均正解数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="bestScore">0</div>
+                <div class="stat-label">最高得点</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="averageTime">0</div>
+                <div class="stat-label">平均タイム（秒）</div>
+            </div>
+        </div>
+
+        <div class="scores-table">
+            <h2>最近の成績</h2>
+            <div id="scoresContent"></div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        window.onload = function() {
+            if (!checkAuth()) return;
+            
+            const user = getCurrentUser();
+            document.getElementById('username').textContent = user.username;
+            
+            displayScores(user.scores);
+        };
+
+        function displayScores(scores) {
+            const scoresContent = document.getElementById('scoresContent');
+            
+            if (!scores || scores.length === 0) {
+                scoresContent.innerHTML = '<div class="no-scores">まだプレイ記録がありません。ゲームをプレイしてみましょう！</div>';
+                return;
+            }
+
+            // 統計を計算
+            const totalGames = scores.length;
+            const totalScore = scores.reduce((sum, score) => sum + score.score, 0);
+            const averageScore = (totalScore / totalGames).toFixed(1);
+            const bestScore = Math.max(...scores.map(s => s.score));
+            const totalTime = scores.reduce((sum, score) => sum + score.time, 0);
+            const averageTime = Math.round(totalTime / totalGames);
+
+            document.getElementById('totalGames').textContent = totalGames;
+            document.getElementById('averageScore').textContent = averageScore;
+            document.getElementById('bestScore').textContent = bestScore;
+            document.getElementById('averageTime').textContent = averageTime;
+
+            // スコアテーブルを作成
+            const sortedScores = [...scores].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>日時</th>
+                            <th>正解数</th>
+                            <th>問題数</th>
+                            <th>正解率</th>
+                            <th>タイム</th>
+                            <th>評価</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            sortedScores.slice(0, 10).forEach(score => {
+                const date = new Date(score.date);
+                const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                const accuracy = ((score.score / score.questions) * 100).toFixed(0);
+                
+                let performanceClass = 'fair';
+                let performanceText = 'がんばろう';
+                
+                if (accuracy >= 90) {
+                    performanceClass = 'excellent';
+                    performanceText = 'すばらしい！';
+                } else if (accuracy >= 70) {
+                    performanceClass = 'good';
+                    performanceText = 'よくできました';
+                }
+
+                tableHTML += `
+                    <tr>
+                        <td>${dateStr}</td>
+                        <td>${score.score}</td>
+                        <td>${score.questions}</td>
+                        <td>${accuracy}%</td>
+                        <td>${score.time}秒</td>
+                        <td><span class="performance-badge ${performanceClass}">${performanceText}</span></td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += '</tbody></table>';
+            scoresContent.innerHTML = tableHTML;
+        }
+    </script>
+</body>
+</html>
