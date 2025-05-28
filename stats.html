@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成績確認 - ゲーム統計</title>
+    <style>
+        body {
+            font-family: 'Noto Sans JP', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        .user-info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 80px 20px 20px;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        }
+        .stats-container {
+            display: grid;
+            gap: 30px;
+        }
+        .game-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .game-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .game-icon {
+            font-size: 2rem;
+        }
+        .score-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .score-item {
+            background: #f5f5f5;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .score-item:hover {
+            background: #e8e8e8;
+            transform: translateX(5px);
+        }
+        .score-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .score-details {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .violations {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .no-scores {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+            font-size: 1.2rem;
+        }
+        .back-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 40px auto 0;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+        .back-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+        }
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="user-info" id="userInfo"></div>
+    
+    <div class="container">
+        <h1>📊 成績確認</h1>
+        
+        <div class="stats-container" id="statsContainer">
+            <!-- 動的に生成される -->
+        </div>
+        
+        <button class="back-button" onclick="history.back()">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+                <path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" fill="white"/>
+            </svg>
+            ゲームに戻る
+        </button>
+    </div>
+    
+    <script src="auth.js"></script>
+    <script>
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ja-JP', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        function displayStats() {
+            const currentUser = getCurrentUser();
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            document.getElementById('userInfo').innerHTML = `
+                <span>ようこそ、${currentUser.username}さん</span>
+                <button onclick="logout()" class="logout-btn">ログアウト</button>
+            `;
+            
+            const users = getUsers();
+            const userData = users[currentUser.username];
+            const statsContainer = document.getElementById('statsContainer');
+            
+            // 算数ゲームの成績
+            let mathStatsHTML = '<div class="game-section">';
+            mathStatsHTML += '<h2 class="game-title"><span class="game-icon">🔢</span>算数ゲーム</h2>';
+            
+            if (userData.scores && userData.scores.length > 0) {
+                // 統計情報
+                const totalScores = userData.scores.reduce((sum, s) => sum + s.score, 0);
+                const avgScore = Math.round(totalScores / userData.scores.length);
+                const maxScore = Math.max(...userData.scores.map(s => s.score));
+                
+                mathStatsHTML += `
+                    <div class="summary-stats">
+                        <div class="stat-card">
+                            <div class="stat-label">プレイ回数</div>
+                            <div class="stat-value">${userData.scores.length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">平均得点</div>
+                            <div class="stat-value">${avgScore}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">最高得点</div>
+                            <div class="stat-value">${maxScore}</div>
+                        </div>
+                    </div>
+                `;
+                
+                mathStatsHTML += '<div class="score-list">';
+                userData.scores.slice().reverse().forEach(score => {
+                    mathStatsHTML += `
+                        <div class="score-item">
+                            <div class="score-date">${formatDate(score.date)}</div>
+                            <div class="score-details">
+                                <div>問題数: ${score.questions}</div>
+                                <div>時間: ${score.time}秒</div>
+                                <div class="score-value">${score.score}点</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                mathStatsHTML += '</div>';
+            } else {
+                mathStatsHTML += '<div class="no-scores">まだプレイ記録がありません</div>';
+            }
+            mathStatsHTML += '</div>';
+            
+            // コンプライアンスゲームの成績
+            let complianceStatsHTML = '<div class="game-section">';
+            complianceStatsHTML += '<h2 class="game-title"><span class="game-icon">⚖️</span>コンプライアンスゲーム</h2>';
+            
+            if (userData.complianceScores && userData.complianceScores.length > 0) {
+                // 統計情報
+                const totalScores = userData.complianceScores.reduce((sum, s) => sum + s.score, 0);
+                const avgScore = Math.round(totalScores / userData.complianceScores.length);
+                const totalViolations = userData.complianceScores.reduce((sum, s) => sum + s.violations, 0);
+                const perfectGames = userData.complianceScores.filter(s => s.violations === 0).length;
+                
+                complianceStatsHTML += `
+                    <div class="summary-stats">
+                        <div class="stat-card">
+                            <div class="stat-label">プレイ回数</div>
+                            <div class="stat-value">${userData.complianceScores.length}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">平均スコア</div>
+                            <div class="stat-value">${avgScore}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">累計違反</div>
+                            <div class="stat-value" style="color: #e74c3c;">${totalViolations}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">完璧クリア</div>
+                            <div class="stat-value" style="color: #27ae60;">${perfectGames}</div>
+                        </div>
+                    </div>
+                `;
+                
+                complianceStatsHTML += '<div class="score-list">';
+                userData.complianceScores.slice().reverse().forEach(score => {
+                    complianceStatsHTML += `
+                        <div class="score-item">
+                            <div class="score-date">${formatDate(score.date)}</div>
+                            <div class="score-details">
+                                <div class="score-value">スコア: ${score.score}</div>
+                                <div class="violations">違反: ${score.violations}回</div>
+                                ${score.violations === 0 ? '<div style="color: #27ae60; font-weight: bold;">🏆 完璧!</div>' : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                complianceStatsHTML += '</div>';
+            } else {
+                complianceStatsHTML += '<div class="no-scores">まだプレイ記録がありません</div>';
+            }
+            complianceStatsHTML += '</div>';
+            
+            statsContainer.innerHTML = mathStatsHTML + complianceStatsHTML;
+        }
+        
+        window.addEventListener('DOMContentLoaded', function() {
+            if (!checkAuth()) {
+                return;
+            }
+            displayStats();
+        });
+    </script>
+</body>
+</html>

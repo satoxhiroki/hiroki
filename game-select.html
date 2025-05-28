@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ゲーム選択</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .header {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: white;
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 30px;
+            backdrop-filter: blur(10px);
+        }
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .logout-btn:hover {
+            background: #c0392b;
+        }
+        .container {
+            text-align: center;
+            color: white;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 50px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        }
+        .game-cards {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .game-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            width: 300px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: #333;
+        }
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.3);
+        }
+        .game-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        .game-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+        .game-description {
+            font-size: 1rem;
+            color: #666;
+            line-height: 1.5;
+        }
+        .math-game {
+            background: linear-gradient(135deg, #FFF5E6 0%, #FFE0B2 100%);
+        }
+        .compliance-game {
+            background: linear-gradient(135deg, #E6F3FF 0%, #B2DFDB 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="user-info" id="userInfo"></div>
+    </div>
+    
+    <div class="container">
+        <h1>どのゲームで遊ぶ？</h1>
+        <div class="game-cards">
+            <a href="math-game.html" class="game-card math-game">
+                <div class="game-icon">🔢</div>
+                <div class="game-title">算数ゲーム</div>
+                <div class="game-description">
+                    小学1年生向けの楽しい算数ゲーム！<br>
+                    足し算と引き算を練習しよう
+                </div>
+            </a>
+            
+            <a href="index.html" class="game-card compliance-game">
+                <div class="game-icon">⚖️</div>
+                <div class="game-title">コンプライアンスゲーム</div>
+                <div class="game-description">
+                    保険業法の知識を試そう！<br>
+                    正しい判断力を身につけよう
+                </div>
+            </a>
+        </div>
+    </div>
+    
+    <script src="auth.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', function() {
+            if (!checkAuth()) {
+                return;
+            }
+            
+            const currentUser = getCurrentUser();
+            if (currentUser) {
+                document.getElementById('userInfo').innerHTML = `
+                    <span>ようこそ、${currentUser.username}さん</span>
+                    <button onclick="logout()" class="logout-btn">ログアウト</button>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

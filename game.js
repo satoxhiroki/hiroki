@@ -383,6 +383,23 @@ function endGame() {
     
     resultBadge.innerHTML = badge;
     gameOverModal.classList.remove('hidden');
+    
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+        const scoreData = {
+            score: score,
+            violations: violations,
+            date: new Date().toISOString(),
+            game: 'compliance'
+        };
+        
+        const users = getUsers();
+        if (!users[currentUser.username].complianceScores) {
+            users[currentUser.username].complianceScores = [];
+        }
+        users[currentUser.username].complianceScores.push(scoreData);
+        saveUsers(users);
+    }
 }
 
 function restartGame() {
@@ -402,5 +419,29 @@ function restartGame() {
 nextButton.addEventListener('click', nextScenario);
 restartButton.addEventListener('click', restartGame);
 
-createParticles();
-loadScenario();
+const viewStatsButton = document.getElementById('view-stats-button');
+if (viewStatsButton) {
+    viewStatsButton.addEventListener('click', function() {
+        window.location.href = 'stats.html';
+    });
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    if (!checkAuth()) {
+        return;
+    }
+    
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+        const userInfo = document.createElement('div');
+        userInfo.className = 'user-info';
+        userInfo.innerHTML = `
+            <span>ようこそ、${currentUser.username}さん</span>
+            <button onclick="logout()" class="logout-btn">ログアウト</button>
+        `;
+        document.body.appendChild(userInfo);
+    }
+    
+    createParticles();
+    loadScenario();
+});

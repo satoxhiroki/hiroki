@@ -46,9 +46,9 @@ function login(username, password) {
             scores: users[username].scores || []
         };
         setCurrentUser(userInfo);
-        showSuccess('ログイン成功！ゲームページへ移動します...');
+        showSuccess('ログイン成功！ゲーム選択ページへ移動します...');
         setTimeout(() => {
-            window.location.href = 'math-game.html';
+            window.location.href = 'game-select.html';
         }, 1000);
         return true;
     }

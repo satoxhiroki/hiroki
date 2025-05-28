@@ -1,0 +1,50 @@
+# FTP設定例
+
+## 一般的なFTPクライアントソフト
+
+### Windows
+1. FileZilla (無料・推奨)
+   - https://filezilla-project.org/
+   
+2. WinSCP (無料)
+   - https://winscp.net/
+
+3. FFFTP (無料・日本製)
+   - https://forest.watch.impress.co.jp/library/software/ffftp/
+
+## FTP接続情報
+- ホスト名: your-ftp-server.com
+- ユーザー名: your-username
+- パスワード: your-password
+- ポート: 21 (通常のFTP) または 22 (SFTP)
+- プロトコル: FTP または SFTP
+
+## アップロードするファイル
+必須ファイル（動作に必要）:
+- working.html (推奨・単体で動作)
+- index.html + game.js + style.css (セットで必要)
+- simple.html (単体で動作)
+
+ドキュメント:
+- README.md (任意)
+
+## FileZillaでのアップロード手順
+1. FileZillaを起動
+2. サイトマネージャーを開く（ファイル → サイトマネージャー）
+3. 「新しいサイト」をクリック
+4. 接続情報を入力:
+   - ホスト: your-ftp-server.com
+   - プロトコル: FTP または SFTP
+   - ログオンタイプ: 通常
+   - ユーザー: your-username
+   - パスワード: your-password
+5. 「接続」をクリック
+6. 左側（ローカル）でファイルを選択
+7. 右側（リモート）の適切なディレクトリに移動
+8. ファイルをドラッグ＆ドロップでアップロード
+
+## 注意事項
+- public_html または www ディレクトリにアップロード
+- ファイル名は小文字を推奨
+- 日本語ファイル名は避ける
+- アップロード後、ブラウザでアクセスして動作確認
